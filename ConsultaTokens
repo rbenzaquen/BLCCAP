@@ -1,0 +1,93 @@
+function consultarTokensMoralis() {
+  // Define both Ethereum addresses to consult
+  var address1 = "0x4380927070ccb0dd069d6412371a72e972239e06";
+  var address2 = "0x0a152c957fd7bcc1212eab27233da0433b7c8ea4";
+  
+  // Your Moralis API Key (replace with your actual key)
+  var MORALIS_API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJub25jZSI6ImU2M2ZhYTgyLWRmNjYtNDc1ZS05MTEyLWU3YTMyMDM0ODU2OSIsIm9yZ0lkIjoiNDM4MTI1IiwidXNlcklkIjoiNDUwNzI3IiwidHlwZUlkIjoiZDBlYTcxNmEtMmZmMi00NzJjLTkzODEtODYzMzkzZDFlMWU4IiwidHlwZSI6IlBST0pFQ1QiLCJpYXQiOjE3NDI5NDg5NDAsImV4cCI6NDg5ODcwODk0MH0.cg3oEn72IyibvWmFd7tJ1IF_MA6bTFA8ZoWHYp9Nyc0";
+  
+  // Get the target sheet and clear previous contents
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("READETH");
+  sheet.clear();
+  
+  // Write tokens for the first address starting from row 1
+  var nextRow = fetchAndWriteTokens(address1, MORALIS_API_KEY, sheet, 1);
+  
+  // Leave an empty row between addresses for clarity
+  nextRow++;
+  
+  // Write tokens for the second address starting from the next available row
+  fetchAndWriteTokens(address2, MORALIS_API_KEY, sheet, nextRow);
+}
+
+/**
+ * Helper function that:
+ * 1. Calls the Moralis API to get ERC-20 tokens for a given address.
+ * 2. Writes a header with the address, then token headers and token data into the given sheet.
+ *
+ * @param {string} address - The Ethereum address to query.
+ * @param {string} apiKey - Your Moralis API Key.
+ * @param {Sheet} sheet - The Google Sheets sheet where data will be written.
+ * @param {number} startRow - The starting row in the sheet where data should be written.
+ * @returns {number} The next available row after writing the data.
+ */
+function fetchAndWriteTokens(address, apiKey, sheet, startRow) {
+  // Build the URL for fetching ERC-20 tokens using the v2 endpoint and the chain parameter
+  var url = "https://deep-index.moralis.io/api/v2/" + address + "/erc20?chain=eth";
+  
+  // Set up request headers
+  var headers = {
+    "accept": "application/json",
+    "X-API-Key": apiKey
+  };
+  
+  // Define the HTTP request options
+  var options = {
+    "method": "get",
+    "headers": headers,
+    "muteHttpExceptions": true
+  };
+  
+  // Make the HTTP request to Moralis API
+  var response = UrlFetchApp.fetch(url, options);
+  var responseCode = response.getResponseCode();
+  
+  // Write the address as a header in the sheet
+  sheet.getRange(startRow, 1).setValue("Address: " + address);
+  startRow++;
+  
+  if (responseCode === 200) {
+    try {
+      // Parse the JSON response
+      var tokens = JSON.parse(response.getContentText());
+      
+      // Write column headers for tokens data
+      sheet.getRange(startRow, 1).setValue("Token");
+      sheet.getRange(startRow, 2).setValue("Balance");
+      startRow++;
+      
+      // Iterate through each token, adjust the balance based on decimals, and write to the sheet
+      for (var i = 0; i < tokens.length; i++) {
+        var token = tokens[i];
+        var balance = parseInt(token.balance) / Math.pow(10, parseInt(token.decimals));
+        sheet.getRange(startRow + i, 1).setValue(token.symbol);
+        sheet.getRange(startRow + i, 2).setValue(balance);
+      }
+      Logger.log("Data written successfully for address: " + address);
+      
+      // Return the next available row number after the last written token
+      return startRow + tokens.length;
+    } catch (error) {
+      // In case of a parsing error, log and write the error message
+      sheet.getRange(startRow, 1).setValue("Error processing data.");
+      Logger.log("Error parsing response for address " + address + ": " + error);
+      return startRow + 1;
+    }
+  } else {
+    // Handle non-200 responses: log and display error information in the sheet
+    sheet.getRange(startRow, 1).setValue("Error: " + responseCode);
+    sheet.getRange(startRow, 2).setValue(response.getContentText());
+    Logger.log("Error fetching tokens for address " + address + ": " + response.getContentText());
+    return startRow + 1;
+  }
+}
