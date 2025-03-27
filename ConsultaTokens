@@ -4,7 +4,7 @@ function consultarTokensMoralis() {
   var address2 = "0x0a152c957fd7bcc1212eab27233da0433b7c8ea4";
   
   // Your Moralis API Key (replace with your actual key)
-  var MORALIS_API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJub25jZSI6ImU2M2ZhYTgyLWRmNjYtNDc1ZS05MTEyLWU3YTMyMDM0ODU2OSIsIm9yZ0lkIjoiNDM4MTI1IiwidXNlcklkIjoiNDUwNzI3IiwidHlwZUlkIjoiZDBlYTcxNmEtMmZmMi00NzJjLTkzODEtODYzMzkzZDFlMWU4IiwidHlwZSI6IlBST0pFQ1QiLCJpYXQiOjE3NDI5NDg5NDAsImV4cCI6NDg5ODcwODk0MH0.cg3oEn72IyibvWmFd7tJ1IF_MA6bTFA8ZoWHYp9Nyc0";
+  var MORALIS_API_KEY = "APIKEY";
   
   // Get the target sheet and clear previous contents
   var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("READETH");
